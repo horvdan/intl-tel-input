@@ -47,6 +47,7 @@ const defaults = {
   preferredCountries: ['us', 'gb'],
   // display the country dial code next to the selected flag so it's not part of the typed number
   separateDialCode: false,
+  useParentAsContainer: true,
   // specify the path to the libphonenumber script to enable validation/formatting
   utilsScript: '',
 };
@@ -323,10 +324,18 @@ class Iti {
       parentClass += this.options.customContainer;
     }
 
-    const wrapper = this._createEl('div', { class: parentClass });
-    this.telInput.parentNode.insertBefore(wrapper, this.telInput);
-    this.flagsContainer = this._createEl('div', { class: 'iti__flag-container' }, wrapper);
-    wrapper.appendChild(this.telInput);
+    const wrapper = undefined
+    if (this.options.useParentAsContainer) {
+      wrapper = this.telInput.parentNode
+      wrapper.classList.add(parentClass)
+      this.flagsContainer = this._createEl('div', { class: 'iti__flag-container' });
+      wrapper.insertBefore(this.flagsContainer, this.telInput)
+    } else {
+      wrapper = this._createEl('div', { class: parentClass });
+      this.telInput.parentNode.insertBefore(wrapper, this.telInput)
+      this.flagsContainer = this._createEl('div', { class: 'iti__flag-container' }, wrapper);
+      wrapper.appendChild(this.telInput);  
+    }
 
     // selected flag (displayed to left of input)
     this.selectedFlag = this._createEl('div', {
@@ -1311,9 +1320,11 @@ class Iti {
     this.telInput.removeAttribute('data-intl-tel-input-id');
 
     // remove markup (but leave the original input)
-    const wrapper = this.telInput.parentNode;
-    wrapper.parentNode.insertBefore(this.telInput, wrapper);
-    wrapper.parentNode.removeChild(wrapper);
+    if (!this.options.useParentAsContainer) {
+      const wrapper = this.telInput.parentNode;
+      wrapper.parentNode.insertBefore(this.telInput, wrapper);
+      wrapper.parentNode.removeChild(wrapper);
+    }
 
     delete window.intlTelInputGlobals.instances[this.id];
   }
